@@ -20,18 +20,20 @@ A minimalist web dashboard for monitoring your Slurm jobs on remote clusters. Bu
 
 ## Getting Started
 
-To launch the application for the first time:
+Run the published package directly with `npx` (no clone, no global install):
 
 ```bash
-# Clone the repository
-git clone <your-repo-url>
-cd slurm-job-watcher
-
-# Run the launch script
-./launch.sh
+npx @misialq/slurm-job-watcher
 ```
 
-The script will automatically install dependencies, build the frontend, and start the server at **http://localhost:3001**.
+Or install it globally:
+
+```bash
+npm install -g @misialq/slurm-job-watcher
+slurm-job-watcher
+```
+
+Either way, the server starts at **http://localhost:3001**.
 
 ## Usage
 
