@@ -220,11 +220,13 @@ function App() {
 
   const parseSlurmValue = (val: string) => {
     if (!val || val === '-' || val === '0') return 0;
+    // Slurm appends 'n' (per node) or 'c' (per CPU) to ReqMem; strip it before parsing the unit.
+    const stripped = /[nc]$/i.test(val) ? val.slice(0, -1) : val;
     const units: { [key: string]: number } = { 'K': 1, 'M': 1024, 'G': 1024 * 1024, 'T': 1024 * 1024 * 1024 };
-    const unit = val.slice(-1).toUpperCase();
-    const num = parseFloat(val.slice(0, -1));
+    const unit = stripped.slice(-1).toUpperCase();
+    const num = parseFloat(stripped.slice(0, -1));
     if (units[unit]) return num * units[unit];
-    if (/[0-9]/.test(unit)) return parseFloat(val);
+    if (/[0-9]/.test(unit)) return parseFloat(stripped);
     return 0;
   };
 
