@@ -14,8 +14,9 @@ app.use(express.json());
 const frontendPath = path.join(__dirname, '../frontend/dist');
 app.use(express.static(frontendPath));
 
-// Helper to validate SSH host alias (alphanumeric, hyphens, underscores)
-const isValidHost = (host) => /^[a-zA-Z0-9-_.]+$/.test(host);
+// Helper to validate SSH host alias (alphanumeric, hyphens, underscores).
+// Reject a leading '-' so the value can't masquerade as an ssh option flag.
+const isValidHost = (host) => /^[a-zA-Z0-9_.][a-zA-Z0-9-_.]*$/.test(host);
 
 // Helper to validate time (e.g. 2024-05-01, now-24h, etc)
 // Slurm sacct --starttime accepts many formats. For simplicity and security, 
@@ -44,7 +45,7 @@ app.get('/api/jobs', (req, res) => {
     slurmCmd = `sacct --parsable2 --format=${format} -j ${jobId}`;
   }
   
-  const command = `ssh -o RemoteCommand=none ${host} '${slurmCmd}'`;
+  const command = `ssh -o RemoteCommand=none -- ${host} '${slurmCmd}'`;
 
   console.log(`Executing: ${command}`);
 
