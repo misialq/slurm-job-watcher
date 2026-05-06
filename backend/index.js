@@ -1,18 +1,16 @@
 #!/usr/bin/env node
 const express = require('express');
 const cors = require('cors');
-const { execFile } = require('child_process');
+const { execFile, spawn } = require('child_process');
 const path = require('path');
 
 const app = express();
 const port = process.env.PORT || 3001;
 
 // Restrict CORS to the bundled frontend's own origin so other websites in the
-// user's browser can't drive the local SSH backend.
-const allowedOrigins = new Set([
-  `http://localhost:${port}`,
-  `http://127.0.0.1:${port}`,
-]);
+// user's browser can't drive the local SSH backend. Populated once the server
+// binds, since the actual port may differ from `port` after fallback.
+let allowedOrigins = new Set();
 app.use(cors({
   origin: (origin, cb) => {
     if (!origin || allowedOrigins.has(origin)) return cb(null, true);
@@ -149,8 +147,47 @@ app.get('/*splat', (req, res) => {
   res.sendFile(indexPath);
 });
 
-app.listen(port, '127.0.0.1', () => {
-  console.log(`\n--- Slurm Job Watcher ---`);
-  console.log(`Backend:  http://localhost:${port}`);
-  console.log(`Frontend: Serving from ${frontendPath}`);
-});
+function openBrowser(url) {
+  const isWin = process.platform === 'win32';
+  const cmd = process.platform === 'darwin' ? 'open' : isWin ? 'cmd' : 'xdg-open';
+  const args = isWin ? ['/c', 'start', '""', url] : [url];
+  const child = spawn(cmd, args, { detached: true, stdio: 'ignore' });
+  child.on('error', () => {});
+  child.unref();
+}
+
+const basePort = Number(port);
+const MAX_PORT_ATTEMPTS = 10;
+
+function startServer(attempt = 0) {
+  const tryPort = basePort + attempt;
+  const server = app.listen(tryPort, '127.0.0.1');
+
+  server.once('listening', () => {
+    allowedOrigins = new Set([
+      `http://localhost:${tryPort}`,
+      `http://127.0.0.1:${tryPort}`,
+    ]);
+    const url = `http://localhost:${tryPort}`;
+    console.log(`\n--- Slurm Job Watcher ---`);
+    console.log(`Backend:  ${url}`);
+    console.log(`Frontend: Serving from ${frontendPath}`);
+    if (tryPort !== basePort) {
+      console.log(`(Port ${basePort} was busy, fell back to ${tryPort}.)`);
+    }
+    if (!process.env.SLURM_NO_OPEN) {
+      openBrowser(url);
+    }
+  });
+
+  server.once('error', (err) => {
+    if (err.code === 'EADDRINUSE' && attempt < MAX_PORT_ATTEMPTS - 1) {
+      startServer(attempt + 1);
+    } else {
+      console.error(`Failed to start server: ${err.message}`);
+      process.exit(1);
+    }
+  });
+}
+
+startServer();

@@ -56,9 +56,10 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [isRefreshingJob, setIsRefreshingJob] = useState(false);
-  const [theme, setTheme] = useState(localStorage.getItem('slurm_theme') || 'garden');
+  const [theme, setTheme] = useState(localStorage.getItem('slurm_theme') || 'emerald');
   const [copiedText, setCopiedText] = useState<string | null>(null);
   const [lastRefresh, setLastRefresh] = useState<{ time: Date; success: boolean } | null>(null);
+  const [showWelcome, setShowWelcome] = useState(!localStorage.getItem('slurm_host'));
 
   // Filtering State
   const [filters, setFilters] = useState({
@@ -607,7 +608,7 @@ function App() {
                       </div>
                       
                       <div className="text-base-content/60 font-medium">Name</div>
-                      <div className="font-bold">{selectedJob.JobName}</div>
+                      <div className="font-bold min-w-0 break-all">{selectedJob.JobName}</div>
                       
                       <div className="text-base-content/60 font-medium">State</div>
                       <div>
@@ -781,6 +782,43 @@ function App() {
           </div>
         </div>
       </div>
+
+      {showWelcome && (
+        <div className="modal modal-open">
+          <div className="modal-box max-w-md">
+            <h3 className="font-bold text-lg">Welcome to Slurm Job Watcher</h3>
+            <p className="py-3 text-sm opacity-80">
+              To get started, enter the SSH config alias for your Slurm cluster
+              {' '}&mdash; the <code className="text-xs bg-base-200 px-1 rounded">Host</code> name
+              from your <code className="text-xs bg-base-200 px-1 rounded">~/.ssh/config</code>.
+            </p>
+            <input
+              type="text"
+              placeholder="e.g. cluster-alias"
+              className="input input-bordered w-full"
+              value={host}
+              onChange={(e) => setHost(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter' && host) setShowWelcome(false); }}
+              autoFocus
+            />
+            <div className="modal-action">
+              <button
+                className="btn btn-ghost btn-sm"
+                onClick={() => setShowWelcome(false)}
+              >
+                Skip
+              </button>
+              <button
+                className="btn btn-primary btn-sm"
+                disabled={!host}
+                onClick={() => setShowWelcome(false)}
+              >
+                Get started
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
