@@ -128,6 +128,51 @@ function App() {
     }
   }, [debouncedHost, since, jobs]);
 
+  const autoRefreshJobs = useCallback(async () => {
+    if (!debouncedHost) return;
+
+    const activeIds = jobs
+      .filter(j => j.State.includes('RUNNING') || j.State.includes('PENDING'))
+      .map(j => j.JobID.split('.')[0]);
+
+    const fetchUrl = async (url: string): Promise<Job[]> => {
+      const response = await fetch(url);
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.indexOf('application/json') !== -1) {
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.details || data.error || 'Failed to fetch jobs');
+        return data;
+      }
+      const text = await response.text();
+      throw new Error(`Server returned non-JSON response: ${text.substring(0, 100)}...`);
+    };
+
+    setLoading(true);
+    setError(null);
+    try {
+      const sincePromise = fetchUrl(`http://localhost:3001/api/jobs?host=${debouncedHost}&since=${since}`);
+      const idPromise = activeIds.length > 0
+        ? fetchUrl(`http://localhost:3001/api/jobs?host=${debouncedHost}&jobId=${activeIds.join(',')}`)
+        : Promise.resolve<Job[]>([]);
+
+      const [sinceData, idData] = await Promise.all([sincePromise, idPromise]);
+
+      setJobs(prev => {
+        const merged = new Map<string, Job>();
+        prev.forEach(j => merged.set(j.JobID.split('.')[0], j));
+        sinceData.forEach(j => merged.set(j.JobID.split('.')[0], j));
+        idData.forEach(j => merged.set(j.JobID.split('.')[0], j));
+        return Array.from(merged.values());
+      });
+      setLastRefresh({ time: new Date(), success: true });
+    } catch (err: any) {
+      setError(err.message);
+      setLastRefresh({ time: new Date(), success: false });
+    } finally {
+      setLoading(false);
+    }
+  }, [debouncedHost, since, jobs]);
+
   const refreshSingleJob = async () => {
     if (!selectedJobId || !debouncedHost) return;
     setIsRefreshingJob(true);
@@ -161,10 +206,10 @@ function App() {
 
   useEffect(() => {
     if (refreshInterval > 0) {
-      const interval = setInterval(() => fetchJobs(true), refreshInterval * 1000);
+      const interval = setInterval(() => autoRefreshJobs(), refreshInterval * 1000);
       return () => clearInterval(interval);
     }
-  }, [refreshInterval, fetchJobs]);
+  }, [refreshInterval, autoRefreshJobs]);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text).then(() => {
