@@ -23,6 +23,6 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/misialq/slurm-manager.git"
+    "url": "git+https://github.com/misialq/slurm-job-watcher.git"
   }
 }
