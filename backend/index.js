@@ -66,7 +66,7 @@ app.get('/api/jobs', (req, res) => {
 
   console.log(`Executing: ssh ${sshArgs.join(' ')}`);
 
-  execFile('ssh', sshArgs, { timeout: 30000 }, (error, stdout, stderr) => {
+  execFile('ssh', sshArgs, { timeout: 30000, maxBuffer: 32 * 1024 * 1024 }, (error, stdout, stderr) => {
     if (error) {
       console.error(`Error: ${error.message}`);
       return res.status(500).json({ error: 'SSH Command failed', details: stderr || error.message });
