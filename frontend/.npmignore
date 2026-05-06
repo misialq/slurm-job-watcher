@@ -1,0 +1,9 @@
+/node_modules
+/src
+/public
+/*.config.*
+/tsconfig*.json
+/eslint.config.*
+/index.html
+/package.json
+/package-lock.json

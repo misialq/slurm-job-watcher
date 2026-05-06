@@ -1,0 +1,28 @@
+{
+  "name": "@misialq/slurm-job-watcher",
+  "version": "0.1.0",
+  "description": "A small web UI for watching Slurm jobs over SSH.",
+  "bin": {
+    "slurm-job-watcher": "backend/index.js"
+  },
+  "files": [
+    "backend/index.js",
+    "frontend/dist"
+  ],
+  "scripts": {
+    "build": "cd frontend && npm install && npm run build",
+    "prepack": "npm run build"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/misialq/slurm-manager.git"
+  }
+}

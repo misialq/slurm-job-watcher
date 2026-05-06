@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 const express = require('express');
 const cors = require('cors');
 const { exec } = require('child_process');
@@ -125,7 +126,7 @@ app.get('/api/jobs', (req, res) => {
 });
 
 // Fallback to React app for any other requests (SPA support)
-app.get('*', (req, res) => {
+app.get('/*splat', (req, res) => {
   const indexPath = path.join(frontendPath, 'index.html');
   res.sendFile(indexPath);
 });
