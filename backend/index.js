@@ -7,7 +7,18 @@ const path = require('path');
 const app = express();
 const port = process.env.PORT || 3001;
 
-app.use(cors());
+// Restrict CORS to the bundled frontend's own origin so other websites in the
+// user's browser can't drive the local SSH backend.
+const allowedOrigins = new Set([
+  `http://localhost:${port}`,
+  `http://127.0.0.1:${port}`,
+]);
+app.use(cors({
+  origin: (origin, cb) => {
+    if (!origin || allowedOrigins.has(origin)) return cb(null, true);
+    return cb(new Error('Origin not allowed'));
+  },
+}));
 app.use(express.json());
 
 // Serve static files from the React frontend
