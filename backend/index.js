@@ -130,7 +130,7 @@ app.get('*', (req, res) => {
   res.sendFile(indexPath);
 });
 
-app.listen(port, () => {
+app.listen(port, '127.0.0.1', () => {
   console.log(`\n--- Slurm Job Watcher ---`);
   console.log(`Backend:  http://localhost:${port}`);
   console.log(`Frontend: Serving from ${frontendPath}`);
