@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 const express = require('express');
 const cors = require('cors');
-const { exec } = require('child_process');
+const { execFile } = require('child_process');
 const path = require('path');
 
 const app = express();
@@ -56,11 +56,17 @@ app.get('/api/jobs', (req, res) => {
     slurmCmd = `sacct --parsable2 --format=${format} -j ${jobId}`;
   }
   
-  const command = `ssh -o RemoteCommand=none -o BatchMode=yes -o ConnectTimeout=10 -o StrictHostKeyChecking=accept-new -- ${host} '${slurmCmd}'`;
+  const sshArgs = [
+    '-o', 'RemoteCommand=none',
+    '-o', 'BatchMode=yes',
+    '-o', 'ConnectTimeout=10',
+    '-o', 'StrictHostKeyChecking=accept-new',
+    '--', host, slurmCmd,
+  ];
 
-  console.log(`Executing: ${command}`);
+  console.log(`Executing: ssh ${sshArgs.join(' ')}`);
 
-  exec(command, { timeout: 30000 }, (error, stdout, stderr) => {
+  execFile('ssh', sshArgs, { timeout: 30000 }, (error, stdout, stderr) => {
     if (error) {
       console.error(`Error: ${error.message}`);
       return res.status(500).json({ error: 'SSH Command failed', details: stderr || error.message });
