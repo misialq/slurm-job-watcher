@@ -1,12 +1,17 @@
 const express = require('express');
 const cors = require('cors');
 const { exec } = require('child_process');
+const path = require('path');
 
 const app = express();
-const port = 3001;
+const port = process.env.PORT || 3001;
 
 app.use(cors());
 app.use(express.json());
+
+// Serve static files from the React frontend
+const frontendPath = path.join(__dirname, '../frontend/dist');
+app.use(express.static(frontendPath));
 
 // Helper to validate SSH host alias (alphanumeric, hyphens, underscores)
 const isValidHost = (host) => /^[a-zA-Z0-9-_.]+$/.test(host);
@@ -119,6 +124,14 @@ app.get('/api/jobs', (req, res) => {
   });
 });
 
+// Fallback to React app for any other requests (SPA support)
+app.get('*', (req, res) => {
+  const indexPath = path.join(frontendPath, 'index.html');
+  res.sendFile(indexPath);
+});
+
 app.listen(port, () => {
-  console.log(`Backend listening at http://localhost:${port}`);
+  console.log(`\n--- Slurm Job Watcher ---`);
+  console.log(`Backend:  http://localhost:${port}`);
+  console.log(`Frontend: Serving from ${frontendPath}`);
 });
