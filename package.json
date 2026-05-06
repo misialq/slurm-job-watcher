@@ -1,6 +1,6 @@
 {
   "name": "@misialq/slurm-job-watcher",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A small web UI for watching Slurm jobs over SSH.",
   "bin": {
     "slurm-job-watcher": "backend/index.js"
